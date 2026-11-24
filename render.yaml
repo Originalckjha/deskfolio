@@ -1,0 +1,40 @@
+# Render Blueprint for the DeskFolio API.
+# Render dashboard → New → Blueprint → pick this repo. Values marked `sync: false`
+# are asked for once in the dashboard and never stored in git.
+services:
+  - type: web
+    name: deskfolio-api
+    runtime: node
+    plan: free # free instances sleep after ~15 min idle; first request then takes ~30-60 s
+    region: singapore # keep close to your Atlas cluster's region
+    rootDir: server
+    # Indexes are created during the build (production boots with autoIndex off).
+    buildCommand: npm ci --omit=dev && npm run db:indexes
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "22"
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      # Your Vercel URL(s), comma-separated. * matches preview deployments, e.g.
+      # https://deskfolio.vercel.app,https://deskfolio-*-yourteam.vercel.app
+      - key: CLIENT_ORIGINS
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: CLOUDINARY_FOLDER
+        value: deskfolio
+      - key: MAX_UPLOAD_MB
+        value: "15"
