@@ -28,7 +28,9 @@ export const tokenStore = {
 };
 
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1',
+  // Production builds are served by the API itself, so the same-origin path just works.
+  // Set VITE_API_URL only when the frontend is hosted separately (e.g. Vercel).
+  baseURL: import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api/v1' : 'http://localhost:5000/api/v1'),
   timeout: 60_000, // uploads and Render cold starts can be slow
 });
 

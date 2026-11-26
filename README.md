@@ -44,8 +44,8 @@ DeskFolio/
 
 ## Deploying
 
-Vercel (web) + Render (API) + MongoDB Atlas: see [DEPLOYMENT.md](DEPLOYMENT.md).
-Configs: [`client/vercel.json`](client/vercel.json), [`render.yaml`](render.yaml).
+One free Render web service (API + web app on one URL) + free MongoDB Atlas: see [DEPLOYMENT.md](DEPLOYMENT.md).
+Config: [`render.yaml`](render.yaml). (Vercel for the frontend is an optional alternative: [`client/vercel.json`](client/vercel.json).)
 
 ## Try it without any accounts (demo mode)
 
