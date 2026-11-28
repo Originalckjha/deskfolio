@@ -15,6 +15,17 @@ describe('MONGODB_URI helpers', () => {
     }
   });
 
+  it('encodes special characters in a raw password so the URI parses', () => {
+    const raw = GOOD.replace('Abc123xyz', 'p@ss:w/rd?#%x');
+    const cleaned = cleanMongoUri(raw);
+    expect(cleaned).toBe(GOOD.replace('Abc123xyz', encodeURIComponent('p@ss:w/rd?#%x')));
+    expect(mongoUriProblems(cleaned)).toEqual([]);
+    // Already-encoded passwords are not double-encoded.
+    expect(cleanMongoUri(cleaned)).toBe(cleaned);
+    // Plain passwords are untouched.
+    expect(cleanMongoUri(GOOD)).toBe(GOOD);
+  });
+
   it('explains placeholders, missing parts and unsafe password characters', () => {
     expect(mongoUriProblems(GOOD.replace('Abc123xyz', '<db_password>')).join()).toMatch(/angle brackets/);
     expect(mongoUriProblems('Abc123xyz').join()).toMatch(/must start with/);

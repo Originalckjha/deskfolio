@@ -11,7 +11,34 @@ export function cleanMongoUri(raw) {
   v = v.replace(/^MONGODB_URI\s*=\s*/i, '').trim();
   v = v.replace(/^(['"`])([\s\S]*)\1$/, '$2').trim();
   // Line breaks or spaces inside a URI are never valid; they come from wrapped copies.
-  return v.replace(/\s+/g, '');
+  v = v.replace(/\s+/g, '');
+  return encodeCredentials(v);
+}
+
+/**
+ * URL-encodes the username and password, so a password containing @ : / ? # % works when
+ * pasted raw. The credentials run from after "://" to the LAST "@" before the host;
+ * the username ends at the first ":". Already-encoded values (%40 etc.) are left as they are.
+ */
+function encodeCredentials(uri) {
+  const m = uri.match(/^(mongodb(?:\+srv)?:\/\/)(.*)@([^@]*)$/i);
+  if (!m) return uri;
+  const [, scheme, creds, hostAndRest] = m;
+  // A "/" before the last "@" could also be a path, but MongoDB paths never contain "@",
+  // so everything before the last "@" really is user:password.
+  const colon = creds.indexOf(':');
+  const user = colon === -1 ? creds : creds.slice(0, colon);
+  const pass = colon === -1 ? null : creds.slice(colon + 1);
+  const enc = (s) => {
+    let decoded = s;
+    try {
+      decoded = decodeURIComponent(s);
+    } catch {
+      /* raw "%" in the password: encode it as-is */
+    }
+    return encodeURIComponent(decoded);
+  };
+  return `${scheme}${enc(user)}${pass === null ? '' : `:${enc(pass)}`}@${hostAndRest}`;
 }
 
 /** The URI with the password replaced by •••, safe to log. */
