@@ -15,10 +15,24 @@ import * as models from '../src/models/index.js';
   const m = env.MONGODB_URI.match(/^(mongodb(?:\+srv)?):\/\/(?:([^:@]*)(?::([^@]*))?@)?([^/?]+)(\/[^?]*)?/i);
   if (m) {
     const [, scheme, user = '', pass = '', host, db = ''] = m;
-    const pwLen = pass ? decodeURIComponent(pass).length : 0;
+    let pw = pass;
+    try {
+      pw = decodeURIComponent(pass);
+    } catch {
+      /* keep raw */
+    }
+    // The shape of the password (never its characters), so a mismatch can be spotted:
+    // compare these counts with the password you meant to use.
+    const letters = (pw.match(/[A-Za-z]/g) || []).length;
+    const digits = (pw.match(/[0-9]/g) || []).length;
+    const other = pw.length - letters - digits;
     console.info(
-      `[indexes] connecting: ${scheme}://${decodeURIComponent(user) || '(no user)'} @ ${host}${db || ' (no database name)'} | password: ${pwLen} chars`,
+      `[indexes] connecting: ${scheme}://${decodeURIComponent(user) || '(no user)'} @ ${host}${db || ' (no database name)'}` +
+        ` | password: ${pw.length} chars (${letters} letters, ${digits} digits, ${other} other)`,
     );
+    if (/db_password/i.test(pw) || /[<>]/.test(pw)) {
+      console.warn('[indexes] WARNING: the password still contains the "<db_password>" placeholder text or "<" / ">".');
+    }
   }
 }
 

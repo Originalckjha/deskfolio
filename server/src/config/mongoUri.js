@@ -55,8 +55,18 @@ export function mongoUriProblems(uri) {
     problems.push('must start with "mongodb+srv://" (copy the whole string from Atlas → Connect → Drivers)');
     return problems;
   }
-  if (/[<>]/.test(uri)) {
-    problems.push('still contains "<" or ">": replace <db_password> (including the angle brackets) with the real password');
+  // Check the decoded form too: cleanMongoUri URL-encodes the password, which turns a
+  // leftover "<db_password>" into "%3Cdb_password%3E".
+  let decoded = uri;
+  try {
+    decoded = decodeURIComponent(uri);
+  } catch {
+    /* keep the raw form */
+  }
+  if (/<[^>]*>/.test(decoded) || /db_password/i.test(decoded)) {
+    problems.push(
+      'still contains the <db_password> placeholder: delete "<db_password>" (including the angle brackets) and put only your real password between "deskfolio_app:" and "@cluster0"',
+    );
   }
   const rest = uri.replace(/^mongodb(\+srv)?:\/\//i, '');
   const ats = (rest.match(/@/g) || []).length;

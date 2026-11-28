@@ -26,6 +26,13 @@ describe('MONGODB_URI helpers', () => {
     expect(cleanMongoUri(GOOD)).toBe(GOOD);
   });
 
+  it('catches a leftover <db_password> placeholder even after encoding', () => {
+    for (const pw of ['<db_password>', '<db_password>MyPass123', 'MyPass123<db_password>', 'db_passwordMyPass123']) {
+      const cleaned = cleanMongoUri(GOOD.replace('Abc123xyz', pw));
+      expect(mongoUriProblems(cleaned).join()).toMatch(/placeholder/);
+    }
+  });
+
   it('explains placeholders, missing parts and unsafe password characters', () => {
     expect(mongoUriProblems(GOOD.replace('Abc123xyz', '<db_password>')).join()).toMatch(/angle brackets/);
     expect(mongoUriProblems('Abc123xyz').join()).toMatch(/must start with/);
