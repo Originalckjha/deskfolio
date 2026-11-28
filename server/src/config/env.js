@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
 import { z } from 'zod';
+import { cleanMongoUri, maskMongoUri, mongoUriProblems } from './mongoUri.js';
 
 dotenv.config({ quiet: true });
 
@@ -14,7 +15,21 @@ const schema = z.object({
   PORT: z.coerce.number().int().positive().default(5000),
   CLIENT_ORIGINS: z.string().default('http://localhost:5173').transform(csv),
 
-  MONGODB_URI: z.string().min(1, 'MONGODB_URI is required'),
+  MONGODB_URI: z.preprocess(
+    cleanMongoUri,
+    z
+      .string()
+      .min(1, 'MONGODB_URI is required')
+      .superRefine((uri, ctx) => {
+        const problems = mongoUriProblems(uri);
+        if (problems.length) {
+          ctx.addIssue({
+            code: 'custom',
+            message: `${problems.join('; ')}\n      value seen (password hidden): ${maskMongoUri(uri)}`,
+          });
+        }
+      }),
+  ),
 
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
   JWT_EXPIRES_IN: z.string().default('7d'),
